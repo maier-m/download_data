@@ -7,7 +7,7 @@ url <- "https://arcticdata.io/metacat/d1/mn/v2/object/urn%3Auuid%3Aa81f49db-5841
 getEMLData <- function(url) {
   
   url_decoded <- URLdecode(url)
-  id <- grep("[0-9a-z:-]*$", url_decoded, value = TRUE)
+  id <- stringr::str_extract(url_decoded, "[0-9a-z:-]*$")
   
   ## Get metadata files that document data
   cn <- dataone::CNode("PROD")
