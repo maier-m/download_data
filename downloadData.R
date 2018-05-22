@@ -1,28 +1,28 @@
+# Sample data URL's
 url <- "https://cn.dataone.org/cn/v2/resolve/https%3A%2F%2Fpasta.lternet.edu%2Fpackage%2Fdata%2Feml%2Fknb-lter-arc%2F20047%2F1%2Face205418a4a821b97bee2dbb69d7952"
-
 url <- "https://cn.dataone.org/cn/v2/resolve/https%3A%2F%2Fpasta.lternet.edu%2Fpackage%2Fdata%2Feml%2Fknb-lter-gce%2F102%2F31%2F6c435602dd547d2aae19965c18c3f049"
+url <- "https://pasta.lternet.edu/package/data/eml/edi/195/2/51abf1c7a36a33a2a8bb05ccbf8c81c6"
+url <- "https://arcticdata.io/metacat/d1/mn/v2/object/urn%3Auuid%3Aa81f49db-5841-4095-aee2-b0cad7a35cc0"
 
 getEMLData <- function(url) {
   
-  ## Find id from url
-  is_d1_cn_file <- grepl("https://cn.dataone.org/cn/v2/resolve/", url)
-  if (!is_d1_cn_file) {
-    stop('url is not a dataone resolvable url',
-         'url should begin with "https://cn.dataone.org/cn/v2/resolve/"')
-  }
+  url_decoded <- URLdecode(url)
+  id <- grep("[0-9a-z:-]*$", url_decoded, value = TRUE)
   
-  id <- gsub("https://cn.dataone.org/cn/v2/resolve/", "", url, fixed = TRUE)
-  id <- URLdecode(id)
-  
-  ## Get DataObject
+  ## Get metadata files that document data
   cn <- dataone::CNode("PROD")
+  metadata_id <- unlist(dataone::query(cn, list(q = paste0('identifier:"', id, '"'),
+                                                    fl = "isDocumentedBy")))
+  if(length(x) == 0){
+    stop("The data PID was not found. Please get the Online Distribution URL from the metadata record on the DataONE portal (https://search.dataone.org/#data) and try again.")
+  }
+    
+  ## Get DataObject
   nodes <- dataone::resolve(cn, id)
   d1c <- dataone::D1Client("PROD", nodes$data$nodeIdentifier[[1]])
   data_obj <- dataone::getDataObject(d1c, id)
   
-  ## Get metadata files that document data
-  metadata_id <- unlist(dataone::query(d1c@cn, list(q = paste0('identifier:"', id, '"'),
-                                                    fl = "isDocumentedBy")))
+  
   ## Gets non obsoleted metadata files
   metadata_id <- unlist(sapply(metadata_id, function(x) {
     unlist(dataone::query(d1c@cn, list(q = paste0('identifier:"', x, '" AND -obsoletedBy:*'),
